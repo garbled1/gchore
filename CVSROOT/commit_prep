@@ -1,0 +1,116 @@
+#! /usr/bin/perl
+# -*-Perl-*-
+#
+#ident	"@(#)cvs/contrib:$Name$:$Id$"
+#
+# Perl filter to handle pre-commit checking of files.  This program
+# records the last directory where commits will be taking place for
+# use by the log_accum.pl script.  Also check for unresolved merge
+# conflicts.
+#
+# Contributed by David Hampton <hampton@cisco.com>
+# Hacked on lots by Greg A. Woods <woods@web.net>
+# Further hacked by Charles M. Hannum <mycroft@netbsd.org>
+
+#
+#	Configurable options
+#
+
+# Check each file (except dot files)
+#
+$check_conflicts = 0;
+
+# Constants (remember to protect strings from RCS keyword substitution)
+#
+$LAST_FILE     = "/tmp/#cf.cvs.lastdir"; # must match name in log_accum.pl
+
+#
+#	Subroutines
+#
+
+sub write_line {
+    local($filename, $line) = @_;
+
+    open(FILE, ">$filename") || die("Cannot open $filename, stopped");
+    print(FILE $line, "\n");
+    close(FILE);
+}
+
+sub check_conflicts {
+    local($directory, $filename) = @_;
+
+    if (open(FILE, "<$filename")) {
+	while (<FILE>) {
+	    if (/^<<<<<<<$/ || /^>>>>>>>$/) {
+		print $directory . "/" . $filename . ":\n";
+		print "  This file contains unresolved merge conflicts.\n";
+		return(1);
+	    }
+	}
+    }
+    close(FILE);
+    return(0);
+}
+
+#
+#	Main Body	
+#
+
+$id = getpgrp();		# You *must* use a shell that does setpgrp()!
+
+# Record the directory for later use by the log_accumulate stript.
+#
+$record_directory = 0;
+
+# Get the root of the CVS tree.
+#
+$cvsroot = $ENV{'CVSROOT'};
+#printf "root = " . $cvsroot . "\n";
+
+# parse command line arguments
+#
+while (@ARGV) {
+    $arg = shift @ARGV;
+
+    if ($arg eq '-d') {
+	$debug = 1;
+	print STDERR "Debug turned on...\n";
+    } elsif ($arg eq '-c') {
+	$check_conflicts = 1;
+    } elsif ($arg eq '-r') {
+	$record_directory = 1;
+    } else {
+	push(@files, split(' ', $arg));
+    }
+}
+
+$directory = shift @files;
+$directory =~ s,$cvsroot/,,;
+
+if ($debug != 0) {
+    print STDERR "dir   - ", $directory, "\n";
+    print STDERR "files - ", join(":", @files), "\n";
+    print STDERR "id    - ", $id, "\n";
+}
+
+# Now check each file name passed in for unresolved merge conflicts.
+#
+if ($check_conflicts != 0) {
+    $failed = 0;
+    foreach $filename (@files) {
+	$failed += &check_conflicts($directory, $filename);
+    }
+    if ($failed != 0) {
+	exit(1);
+    }
+}
+
+# Record this directory as the last one checked.  This will be used
+# by the log_accumulate script to determine when it is processing
+# the final directory of a multi-directory commit.
+#
+if ($record_directory != 0) {
+    &write_line("$LAST_FILE.$id", $directory);
+}
+
+exit(0);
