@@ -89,6 +89,7 @@ typedef struct _options_t {
     char *watchdir;    /**< \brief directory to watch for updates */
     char *sendmail;    /**< \brief path to sendmail binary */
     int checkfrequency;/**< \brief seconds to wait between task checks */
+    int wakeup;	       /**< \brief secs after midnight when you wake up */
 } options_t;
 
 #define SECONDS_PER_DAY 86400
@@ -126,5 +127,6 @@ time_t calc_midnight(time_t time);
 gboolean scan_tasktable(gpointer data);
 void clean_all_tasks(void);
 void clean_all_todos(void);
+void quit_program(void);
 
 #endif /* __gchore_h__ */

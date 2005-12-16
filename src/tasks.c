@@ -464,6 +464,7 @@ void save_some_files(void)
    \brief calculate midnight of a given time
    \param time time to calc midnight for
    \return midnight today in time_t
+   This takes into account options->wakeup and modifies it by that much.
 */
 
 time_t calc_midnight(time_t time)
@@ -476,6 +477,11 @@ time_t calc_midnight(time_t time)
     now_tm->tm_sec = 0;
     now_tm->tm_min = 0;
     now_tm->tm_hour = 0;
+    if (options->wakeup) {
+	now_tm->tm_hour += options->wakeup/3600;
+	now_tm->tm_min += (options->wakeup%3600)/60;
+    }
+
     mid = mktime(now_tm);
     return(mid);
 }
@@ -489,10 +495,11 @@ gboolean scan_tasktable(gpointer data)
     task_t *task;
     todo_t *todo;
     time_t now, midnight;
-    int addtask;
+    int addtask, adder;
     struct tm *sday;
 
-    midnight = calc_midnight(time(NULL));
+    now = time(NULL);
+    midnight = calc_midnight(now);
     sday = localtime(&midnight);
 
     TAILQ_FOREACH(task, &tasktable, next) {
@@ -523,6 +530,29 @@ gboolean scan_tasktable(gpointer data)
 		       (task->dowe[4] && sday->tm_mday == 1 &&
 			sday->tm_mon%2 == 0)) {
 		  addtask++;
+	    } else if (task->dowe[1] && sday->tm_wday > 1) {
+		/* weekly special check */
+		if (difftime(now, calc_midnight(todo->completed))
+		    > SECONDS_PER_DAY*(sday->tm_wday - 1))
+		    addtask++;
+	    } else if (task->dowe[2]) {
+		adder = 0;
+		if ((sday->tm_yday/7)%2 != 0)
+		    adder = 7;
+		if (difftime(now, calc_midnight(todo->completed))
+		    > SECONDS_PER_DAY*(adder + sday->tm_wday -1))
+		    addtask++;
+	    } else if (task->dowe[3]) {
+		if (difftime(now, calc_midnight(todo->completed))
+		    > SECONDS_PER_DAY*sday->tm_mday)
+		    addtask++;
+	    } else if (task->dowe[4]) {
+		adder = 0;
+		if (sday->tm_mon%2 != 0)
+		    adder = 30;
+		if (difftime(now, calc_midnight(todo->completed))
+		    > SECONDS_PER_DAY*(sday->tm_mday+adder))
+		    addtask++;
 	    }
 	}
 	if (addtask && todo->window != NULL) {
@@ -535,11 +565,12 @@ gboolean scan_tasktable(gpointer data)
 		canproc = 0;
 
 	    /* theoretically this task needs to be done */
-	    now = calc_midnight(todo->completed);
-	    if (difftime(time(NULL), todo->lastalert) > SECONDS_PER_DAY &&
-		difftime(time(NULL), now) > SECONDS_PER_DAY) {
+	    if (difftime(now,
+			 calc_midnight(todo->lastalert)) > SECONDS_PER_DAY &&
+		difftime(now,
+			 calc_midnight(todo->completed)) > SECONDS_PER_DAY) {
 		todo->window = create_dialog_reminder(task->name, canproc);
-		todo->lastalert = time(NULL);
+		todo->lastalert = now;
 		gtk_widget_show(todo->window);
 	    }
 	}
@@ -581,4 +612,23 @@ void clean_all_todos(void)
 
     while (TAILQ_FIRST(&todotable) != NULL)
 	TAILQ_REMOVE(&todotable, TAILQ_FIRST(&todotable), next);
+}
+
+/**
+   \brief deal with a quit
+
+   This keeps any popped reminders from getting delayed for a day
+*/
+
+void quit_program(void)
+{
+    todo_t *todo;
+
+    TAILQ_FOREACH(todo, &todotable, next) {
+	if (todo->window)
+	    todo->lastalert = 0;
+    }
+    if (options->tododb)
+	write_todofile(options->tododb);
+    gtk_main_quit();
 }

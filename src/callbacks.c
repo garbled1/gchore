@@ -149,7 +149,7 @@ void on_save_as1_activate(GtkMenuItem *menuitem, gpointer user_data)
 
 void on_quit1_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-    gtk_main_quit();
+    quit_program();
 }
 
 
@@ -567,7 +567,9 @@ gboolean on_applybutton1_button_press_event(GtkWidget *widget,
     }
     TAILQ_INSERT_TAIL(&tasktable, task, next);
 
-    on_calendar1_day_selected(GTK_CALENDAR(calendar_window), NULL);
+    tmpw = lookup_widget(calendar_window, "calendar1");
+    if (tmpw != NULL)
+     on_calendar1_day_selected(GTK_CALENDAR(tmpw), NULL);
 
     save_some_files();
     return(FALSE);
@@ -641,6 +643,13 @@ gboolean on_button_applyoptions_button_press_event(GtkWidget *widget,
     if (tmpw == NULL)
 	return(FALSE);
     options->watchdir = strdup(gtk_entry_get_text(GTK_ENTRY(tmpw)));
+    tmpw = lookup_widget(parent, "entry_wakeup");
+    if (tmpw == NULL)
+	return(FALSE);
+    text = strdup(gtk_entry_get_text(GTK_ENTRY(tmpw)));
+    sscanf(text, "%d:%d", &hr, &min);
+    options->wakeup = hr*3600 + min*60;
+    free(text);
     tmpw = lookup_widget(parent, "entry_emailaddr");
     if (tmpw == NULL)
 	return(FALSE);

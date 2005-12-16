@@ -697,6 +697,8 @@ GtkWidget *create_dialog_options(void)
     GtkWidget *button_applyoptions;
     GtkWidget *button_canceloptions;
     GtkWidget *button_okoptions;
+    GtkWidget *labelwu;
+    GtkWidget *entry_wakeup;
     char buf[256];
 
     dialog_options = gtk_dialog_new();
@@ -792,6 +794,23 @@ GtkWidget *create_dialog_options(void)
     gtk_widget_set_size_request(entry_watch_directory, 232, 24);
     if (options->watchdir)
 	gtk_entry_set_text(GTK_ENTRY(entry_watch_directory),options->watchdir);
+
+    labelwu = gtk_label_new("When do you usually wake up?");
+    gtk_widget_show(labelwu);
+    gtk_fixed_put(GTK_FIXED(fixed4), labelwu, 8, 216);
+    gtk_widget_set_size_request(labelwu, 232, 16);
+    gtk_label_set_line_wrap(GTK_LABEL(labelwu), TRUE);
+
+    entry_wakeup = gtk_entry_new();
+    gtk_widget_show(entry_wakeup);
+    gtk_fixed_put(GTK_FIXED(fixed4), entry_wakeup, 8, 232);
+    gtk_widget_set_size_request(entry_wakeup, 64, 16);
+    if (options->wakeup)
+	sprintf(buf, "%d:%0.2d", options->wakeup/3600,
+		(options->wakeup%3600)/60);
+    else
+	sprintf(buf, "6:00");
+    gtk_entry_set_text(GTK_ENTRY(entry_wakeup), buf);
 
     label22 = gtk_label_new("General Options");
     gtk_widget_show(label22);
@@ -987,6 +1006,8 @@ GtkWidget *create_dialog_options(void)
     GLADE_HOOKUP_OBJECT(dialog_options, label17, "label17");
     GLADE_HOOKUP_OBJECT(dialog_options, label19, "label19");
     GLADE_HOOKUP_OBJECT(dialog_options, entry_watch_directory, "entry_watch_directory");
+    GLADE_HOOKUP_OBJECT(dialog_options, labelwu, "labelwu");
+    GLADE_HOOKUP_OBJECT(dialog_options, entry_wakeup, "entry_wakeup");
     GLADE_HOOKUP_OBJECT(dialog_options, label22, "label22");
     GLADE_HOOKUP_OBJECT(dialog_options, fixed3, "fixed3");
     GLADE_HOOKUP_OBJECT(dialog_options, label7, "label7");
@@ -1042,7 +1063,8 @@ GtkWidget *create_dialog_reminder(char *taskname, int procable)
     gtk_widget_show(dialog_vbox3);
 
     label_taskname = gtk_label_new(NULL);
-    markup = g_markup_printf_escaped("<size=\"xx-large\">%s</size>", taskname);
+    markup = g_markup_printf_escaped("<span size=\"xx-large\">%s</span>",
+				     taskname);
     gtk_label_set_markup(GTK_LABEL(label_taskname), markup);
     g_free(markup);
     gtk_widget_show(label_taskname);

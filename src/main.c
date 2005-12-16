@@ -62,7 +62,7 @@ int main (int argc, char *argv[])
 {
     GtkWidget *dialog_reminder;
     GtkWidget *dialog_taskdelete;
-    GtkWidget *dialog;
+    GtkWidget *dialog, *tmpw;
     char file[MAX_PATH], *home;
 
     gtk_set_locale();
@@ -76,7 +76,6 @@ int main (int argc, char *argv[])
 
     calendar_window = create_window1();
     gtk_widget_show(calendar_window);
-    on_calendar1_day_selected(GTK_CALENDAR(calendar_window), NULL);
 
     /* if none exists, write it */
     if (!parse_optionsfile()) {
@@ -98,7 +97,15 @@ int main (int argc, char *argv[])
 	    sprintf(file, "%s/gchore.todo", home);
 	options->tododb = strdup(file);
 	write_optionsfile();
+    } else {
+	parse_taskfile(options->taskdb);
+	parse_todofile(options->tododb);
+	tmpw = lookup_widget(calendar_window, "calendar1");
+	if (tmpw)
+	    on_calendar1_day_selected(GTK_CALENDAR(tmpw), NULL);
     }
+
+    (void)scan_tasktable(NULL);
 
     timeout = g_timeout_add(options->checkfrequency*1000,
 			    scan_tasktable, NULL);
