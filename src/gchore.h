@@ -42,6 +42,8 @@
 typedef struct _task_t task_t;
 /** \brief todo structure */
 typedef struct _todo_t todo_t;
+/** \brief log structure */
+typedef struct _log_t log_t;
 
 /** \brief task structure */
 struct _task_t {
@@ -66,6 +68,14 @@ struct _todo_t {
     GtkWidget *window;
 };
 
+/** \brief log structure */
+struct _log_t {
+    TAILQ_ENTRY(_log_t) next;	/**< \brief doubly linked list */
+    int taskid;			/**< \brief task id num */
+    time_t completed;		/**< \brief when was it completed? */
+    int procdays;		/**< \brief procrastinated days */
+};
+
 /** \brief calendar time structure */
 typedef struct _caltime_t {
     struct tm sday;
@@ -86,6 +96,7 @@ typedef struct _options_t {
     int reportproc;    /**< \brief report procrastinations in report */
     char *taskdb;      /**< \brief default taskdb to open at start */
     char *tododb;      /**< \brief default tododb to open at start */
+    char *logdb;       /**< \brief default logdb to open at start */
     char *watchdir;    /**< \brief directory to watch for updates */
     char *sendmail;    /**< \brief path to sendmail binary */
     int checkfrequency;/**< \brief seconds to wait between task checks */
@@ -124,6 +135,14 @@ void write_taskfile(char *file);
 void write_todofile(char *file);
 void save_some_files(void);
 time_t calc_midnight(time_t time);
+log_t *new_log(void);
+void parse_log(xmlDocPtr doc, xmlNodePtr cur, log_t *log);
+void write_log(xmlNodePtr node, char *elm, log_t *log);
+void parse_logfile(char *file);
+void write_logfile(char *file);
+void send_per_task_email(log_t *log);
+void send_task_email(void);
+void log_task(int taskid, time_t completed, int procdays);
 gboolean scan_tasktable(gpointer data);
 void clean_all_tasks(void);
 void clean_all_todos(void);

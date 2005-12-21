@@ -71,6 +71,8 @@ void parse_options(xmlDocPtr doc, xmlNodePtr cur, options_t *options)
 	    parsestring(doc, child, &options->taskdb);
 	if (!strcmp(child->name, "tododb"))
 	    parsestring(doc, child, &options->tododb);
+	if (!strcmp(child->name, "logdb"))
+	    parsestring(doc, child, &options->logdb);
 	if (!strcmp(child->name, "checkfrequency"))
 	    parseint(doc, child, &options->checkfrequency);
 	if (!strcmp(child->name, "sendmail"))
@@ -98,6 +100,7 @@ void write_options(xmlNodePtr node, options_t *options)
     write_int_if(node, "reportproc", options->reportproc);
     write_string_if(node, "taskdb", options->taskdb);
     write_string_if(node, "tododb", options->tododb);
+    write_string_if(node, "logdb", options->logdb);
     write_string_if(node, "sendmail", options->sendmail);
     write_string_if(node, "watchdir", options->watchdir);
     write_int_if(node, "wakeup", options->wakeup);
@@ -121,6 +124,7 @@ int parse_optionsfile(void)
     options = smalloc(options_t);
     options->checkfrequency = 60; /* set a default for this */
     options->wakeup = 21600; /* 6am */
+    options->sendmail = "sendmail";
     
     if (home != NULL) {
 	sprintf(file, "%s/%s", home, sf);

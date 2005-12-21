@@ -634,6 +634,10 @@ gboolean on_button_applyoptions_button_press_event(GtkWidget *widget,
     if (tmpw == NULL)
 	return(FALSE);
     options->tododb = strdup(gtk_entry_get_text(GTK_ENTRY(tmpw)));
+    tmpw = lookup_widget(parent, "entry_logdb");
+    if (tmpw == NULL)
+	return(FALSE);
+    options->logdb = strdup(gtk_entry_get_text(GTK_ENTRY(tmpw)));
     tmpw = lookup_widget(parent, "spin_updatetime");
     if (tmpw == NULL)
 	return(FALSE);
@@ -754,10 +758,22 @@ gboolean on_button_remindercomplete_button_press_event(GtkWidget *widget,
     todo = find_todo_byid(task->taskid);
     if (todo == NULL)
 	return(FALSE);
+    if (task->email)
+	log_task(task->taskid, time(NULL), todo->procdays);
+
     todo->procdays = 0;
     todo->completed = time(NULL);
     todo->lastalert = time(NULL);
     todo->window = NULL;
+
+    if (task->time) {
+	/* one time task, nuke it */
+	TAILQ_REMOVE(&tasktable, task, next);
+	TAILQ_REMOVE(&todotable, todo, next);
+	free(task->name);
+	free(task);
+	free(todo);
+    }
 
     gtk_widget_destroy(parent);
     save_some_files();
@@ -849,6 +865,48 @@ gboolean on_button_findtododb_button_press_event(GtkWidget *widget,
     return FALSE;
 }
 
+gboolean on_button_findlogdb_button_press_event(GtkWidget *widget,
+						 GdkEventButton *event,
+						 gpointer user_data)
+{
+    GtkWidget *fd1, *parent, *tmpw;
+
+    parent = (GtkWidget *)user_data;
+    fd1 = gtk_file_chooser_dialog_new("Find Log Database",
+				      (GtkWindow *)parent,
+				      GTK_FILE_CHOOSER_ACTION_OPEN,
+				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				      GTK_STOCK_OPEN, GTK_RESPONSE_OK, NULL);
+    if (gtk_dialog_run(GTK_DIALOG(fd1)) == GTK_RESPONSE_OK) {
+	gchar *filename;
+
+	filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fd1));
+	tmpw = lookup_widget(parent, "entry_logdb");
+	if (tmpw != NULL)
+	    gtk_entry_set_text(GTK_ENTRY(tmpw), filename);
+	g_free(filename);
+    }
+
+    gtk_widget_destroy(fd1);
+
+    return FALSE;
+}
+
+void toggle_options_emailtime(GtkButton *button, gpointer user_data)
+{
+    GtkWidget *parent, *time, *entry;
+    gboolean state;
+
+    parent = (GtkWidget *)user_data;
+
+    time = lookup_widget(parent, "radio_email_time");
+    entry = lookup_widget(parent, "entry_emailtime");
+    if (entry == NULL || time == NULL)
+	return;
+
+    state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(time));
+    gtk_widget_set_sensitive(entry, state);
+}
 
 void on_check_sendemail_clicked(GtkButton *button, gpointer user_data)
 {

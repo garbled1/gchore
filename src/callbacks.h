@@ -134,7 +134,13 @@ on_button_findtododb_button_press_event
                                         (GtkWidget       *widget,
                                         GdkEventButton  *event,
                                         gpointer         user_data);
+gboolean
+on_button_findlogdb_button_press_event
+                                        (GtkWidget       *widget,
+                                        GdkEventButton  *event,
+                                        gpointer         user_data);
 
+void toggle_options_emailtime(GtkButton *button, gpointer user_data);
 void
 on_check_sendemail_clicked             (GtkButton       *button,
                                         gpointer         user_data);

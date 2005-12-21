@@ -37,6 +37,8 @@
 
 #include "utils.h"
 
+options_t *options;
+
 /**
    \brief calculate caltime_t from mon/day/year
    \param mon month
@@ -49,25 +51,29 @@ caltime_t *calc_caltime(int day, int month, int year)
 {
     caltime_t *ret;
     time_t mid;
-    struct tm *now;
+    struct tm now;
 
     ret = smalloc(caltime_t);
     mid = time(NULL);
-    now = localtime(&mid);
+    (void)localtime_r(&mid, &now);
 
     ret->sday.tm_sec = 0;
     ret->sday.tm_min = 0;
     ret->sday.tm_hour = 0;
+    if (options->wakeup) {
+        ret->sday.tm_hour += options->wakeup/3600;
+        ret->sday.tm_min += (options->wakeup%3600)/60;
+    }
     ret->sday.tm_mday = day;
     ret->sday.tm_mon = month;
     ret->sday.tm_year = year-1900;
-    ret->sday.tm_isdst = now->tm_isdst;
-    ret->sday.tm_gmtoff = now->tm_gmtoff;
-    ret->sday.tm_zone = now->tm_zone;
+    ret->sday.tm_isdst = now.tm_isdst;
+    ret->sday.tm_gmtoff = now.tm_gmtoff;
+    ret->sday.tm_zone = now.tm_zone;
     mid = mktime(&(ret->sday));
     /* extract this day's weekday */
-    now = localtime(&mid);
-    ret->sday.tm_wday = now->tm_wday;
+    (void)localtime_r(&mid, &now);
+    ret->sday.tm_wday = now.tm_wday;
     ret->midnight = mid;
 
     return(ret);

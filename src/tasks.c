@@ -44,14 +44,17 @@
 #include "utils.h"
 #include "xmlparse.h"
 #include "interface.h"
+#include "support.h"
 
 TAILQ_HEAD(, _task_t) tasktable = TAILQ_HEAD_INITIALIZER(tasktable);
 TAILQ_HEAD(, _todo_t) todotable = TAILQ_HEAD_INITIALIZER(todotable);
+TAILQ_HEAD(, _log_t) logtable = TAILQ_HEAD_INITIALIZER(logtable);
 time_t today;
 
 extern options_t *options;
 extern char *tzname[2];
 extern guint timeout;
+extern GtkWidget *calendar_window;
 
 /**
    \brief generate a monotonically increasing taskid number
@@ -343,6 +346,8 @@ void parse_taskfile(char *file)
     while (cur != NULL) {
 	if (!strcmp(cur->name, "todofile"))
 	    parsestring(doc, cur, &options->tododb);
+	if (!strcmp(cur->name, "logfile"))
+	    parsestring(doc, cur, &options->logdb);
 	if (!strcmp(cur->name, "task")) {
 	    task = new_task();
 	    parse_task(doc, cur, task);
@@ -389,6 +394,8 @@ void parse_todofile(char *file)
     while (cur != NULL) {
 	if (!strcmp(cur->name, "taskfile"))
 	    parsestring(doc, cur, &options->taskdb);
+	if (!strcmp(cur->name, "logfile"))
+	    parsestring(doc, cur, &options->logdb);
 	if (!strcmp(cur->name, "todo")) {
 	    todo = new_todo();
 	    parse_todo(doc, cur, todo);
@@ -415,6 +422,7 @@ void write_taskfile(char *file)
     doc->children = xmlNewDocNode(doc, NULL, "Tasks", NULL);
     tree = doc->children;
     write_string_if(tree, "todofile", options->tododb);
+    write_string_if(tree, "logfile", options->logdb);
     TAILQ_FOREACH(task, &tasktable, next) {
 	write_task(tree, "task", task);
     }
@@ -437,6 +445,7 @@ void write_todofile(char *file)
     doc->children = xmlNewDocNode(doc, NULL, "Todos", NULL);
     tree = doc->children;
     write_string_if(tree, "taskfile", options->taskdb);
+    write_string_if(tree, "logfile", options->logdb);
     TAILQ_FOREACH(todo, &todotable, next) {
 	write_todo(tree, "todo", todo);
     }
@@ -458,6 +467,10 @@ void save_some_files(void)
     if (options->tododb != NULL) {
 	write_todofile(options->tododb);
     }
+    /* and now the logfile */
+    if (options->logdb != NULL) {
+	write_logfile(options->logdb);
+    }
 }
 
 /**
@@ -469,21 +482,283 @@ void save_some_files(void)
 
 time_t calc_midnight(time_t time)
 {
-    struct tm *now_tm;
+    struct tm now_tm;
     time_t mid;
 
-    now_tm = localtime(&time);
+    (void)localtime_r(&time, &now_tm);
     /* make it midnight */
-    now_tm->tm_sec = 0;
-    now_tm->tm_min = 0;
-    now_tm->tm_hour = 0;
+    now_tm.tm_sec = 0;
+    now_tm.tm_min = 0;
+    now_tm.tm_hour = 0;
     if (options->wakeup) {
-	now_tm->tm_hour += options->wakeup/3600;
-	now_tm->tm_min += (options->wakeup%3600)/60;
+	now_tm.tm_hour += options->wakeup/3600;
+	now_tm.tm_min += (options->wakeup%3600)/60;
     }
 
-    mid = mktime(now_tm);
+    mid = mktime(&now_tm);
     return(mid);
+}
+
+/* LOG STUFF */
+
+/**
+   \brief allocate a new log
+   \return a new log
+*/
+
+log_t *new_log(void)
+{
+    log_t *log;
+
+    log = smalloc(log_t);
+    return(log);
+}
+
+/**
+   \brief parse a log
+   \param doc pointer to xml doc file
+   \param cur expected to be at the level of the log tag on entry
+   \param log pointer to log structure to be filled out
+*/
+
+void parse_log(xmlDocPtr doc, xmlNodePtr cur, log_t *log)
+{
+    xmlNodePtr child;
+
+    child = cur->xmlChildrenNode;
+    while (child != NULL) {
+	if (!strcmp(child->name, "procdays"))
+	    parseint(doc, child, &log->procdays);
+	if (!strcmp(child->name, "completed"))
+	    parselong(doc, child, &log->completed);
+	if (!strcmp(child->name, "taskid"))
+	    parseint(doc, child, &log->taskid);
+	child = child->next;
+    }
+}
+
+/**
+   \brief write a log
+   \param node an xmlNodePtr
+   \param elm element name
+   \param log log to write out
+*/
+
+void write_log(xmlNodePtr node, char *elm, log_t *log)
+{
+    xmlNodePtr child;
+
+    child = xmlNewChild(node, NULL, elm, NULL);
+    write_int(child, "procdays", log->procdays);
+    write_long(child, "completed", log->completed);
+    write_int(child, "taskid", log->taskid);
+}
+
+/**
+   \brief parse the logs file
+   \param file filename to parse
+*/
+
+void parse_logfile(char *file)
+{
+    xmlDocPtr doc;
+    xmlNodePtr cur;
+    log_t *log;
+
+    doc = xmlParseFile(file);
+    if (doc == NULL)
+	return;
+
+    cur = xmlDocGetRootElement(doc);
+    if (cur == NULL) {
+	errormsg(GTK_MESSAGE_ERROR, "%s: empty document", file);
+	return;
+    }
+
+    if (strcmp(cur->name, "Logs")) {
+	errormsg(GTK_MESSAGE_ERROR, "%s: root node != Logs", file);
+	return;
+    }
+
+    if (TAILQ_EMPTY(&logtable))
+	TAILQ_INIT(&logtable);
+
+
+    cur = xmlDocGetRootElement(doc);
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL) {
+	if (!strcmp(cur->name, "taskfile"))
+	    parsestring(doc, cur, &options->taskdb);
+	if (!strcmp(cur->name, "todofile"))
+	    parsestring(doc, cur, &options->tododb);
+	if (!strcmp(cur->name, "log")) {
+	    log = new_log();
+	    parse_log(doc, cur, log);
+	    TAILQ_INSERT_TAIL(&logtable, log, next);
+	}
+	cur = cur->next;
+    }
+    xmlFreeDoc(doc);
+    options->logdb = strdup(file);
+}
+
+/**
+   \brief write out a logfile
+   \param file full path to file
+*/
+
+void write_logfile(char *file)
+{
+    xmlDocPtr doc;
+    xmlNodePtr tree;
+    log_t *log;
+
+    doc = xmlNewDoc("1.0");
+    doc->children = xmlNewDocNode(doc, NULL, "Logs", NULL);
+    tree = doc->children;
+    write_string_if(tree, "taskfile", options->taskdb);
+    write_string_if(tree, "todofile", options->tododb);
+    TAILQ_FOREACH(log, &logtable, next) {
+	write_log(tree, "log", log);
+    }
+    xmlSaveFormatFile(file, doc, 1);
+    xmlFreeDoc(doc);
+}
+
+/**
+   \brief send an email for a specific task having been completed
+   \param log log entry for task
+*/
+
+void send_per_task_email(log_t *log)
+{
+    task_t *task;
+    char sfn[20] = "/tmp/gchore.XXXXXX";
+    char buf[2048];
+    int fd = -1;
+    FILE *sfp;
+
+    if (options->emailaddr == NULL || options->sendmail == NULL)
+	return;
+
+    task = find_task_byid(log->taskid);
+    if (task == NULL)
+	return;
+
+    if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
+	if (fd != -1) {
+	    unlink(sfn);
+	    close(fd);
+	}
+	errormsg(GTK_MESSAGE_ERROR, "%s: %s\n", sfn, strerror(errno));
+	return;
+    }
+
+    /* we have a task and a file handle.  yay */
+
+    fprintf(sfp, "Subject: [GCHORE] Task %s completed\n\n", task->name);
+    fprintf(sfp, "The task %s has been completed on %s", task->name,
+	    ctime(&log->completed));
+    if (options->reportproc && log->procdays)
+	fprintf(sfp, "The task was procrastinated for %d days.\n",
+		log->procdays);
+    fclose(sfp);
+    close(fd);
+
+    snprintf(buf, 2048, "%s %s < %s", options->sendmail, options->emailaddr,
+	     sfn);
+    if (system(buf) == -1)
+	errormsg(GTK_MESSAGE_ERROR, "Could not launch sendmail with command:\n"
+		 "%s : %s\n", buf, strerror(errno));
+    unlink(sfn);
+}
+
+/**
+   \brief send out a scheduled email of tasks completed
+*/
+
+void send_task_email(void)
+{
+    task_t *task;
+    log_t *log;
+    char sfn[20] = "/tmp/gchore.XXXXXX";
+    char buf[2048];
+    int fd = -1;
+    FILE *sfp;
+
+    if (options->emailaddr == NULL || options->sendmail == NULL)
+	return;
+
+    if (TAILQ_EMPTY(&logtable))
+	return;
+
+    if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
+	if (fd != -1) {
+	    unlink(sfn);
+	    close(fd);
+	}
+	errormsg(GTK_MESSAGE_ERROR, "%s: %s\n", sfn, strerror(errno));
+	return;
+    }
+
+    fprintf(sfp, "Subject: [GCHORE] Task completion notice\n\n");
+
+    while (TAILQ_FIRST(&logtable) != NULL) {
+	log = TAILQ_FIRST(&logtable);
+	task = find_task_byid(log->taskid);
+	if (task != NULL) {
+	    fprintf(sfp, "The task %s has been completed on %s", task->name,
+		    ctime(&log->completed));
+	    if (options->reportproc && log->procdays)
+		fprintf(sfp, "The task was procrastinated for %d days.\n\n",
+			log->procdays);
+	    else
+		fprintf(sfp, "\n");
+	}
+	TAILQ_REMOVE(&logtable, log, next);
+	free(log);
+    }
+
+    fclose(sfp);
+    close(fd);
+
+    snprintf(buf, 2048, "%s %s < %s", options->sendmail, options->emailaddr,
+	     sfn);
+    if (system(buf) == -1)
+	errormsg(GTK_MESSAGE_ERROR, "Could not launch sendmail with command:\n"
+		 "%s : %s\n", buf, strerror(errno));
+    unlink(sfn);
+
+    if (options->logdb != NULL)
+	write_logfile(options->logdb);
+}
+
+/**
+   \brief log a task completion
+   \param taskid taskid of task completed
+   \param completed time task was completed
+   \param procdays number of days task was procrastinated
+*/
+
+void log_task(int taskid, time_t completed, int procdays)
+{
+    log_t *logentry;
+
+    logentry = new_log();
+    logentry->taskid = taskid;
+    logentry->completed = completed;
+    logentry->procdays = procdays;
+
+    if (options->emailfreq == EMAIL_COMPLETE) {
+	send_per_task_email(logentry);
+	free(logentry);
+	return;
+    }
+
+    if (TAILQ_EMPTY(&logtable))
+	TAILQ_INIT(&logtable);
+
+    TAILQ_INSERT_TAIL(&logtable, logentry, next);
 }
 
 /**
@@ -494,13 +769,23 @@ gboolean scan_tasktable(gpointer data)
 {
     task_t *task;
     todo_t *todo;
-    time_t now, midnight;
+    time_t now, midnight, etime;
     int addtask, adder;
-    struct tm *sday;
+    struct tm sday;
+    GtkWidget *cal;
 
     now = time(NULL);
     midnight = calc_midnight(now);
-    sday = localtime(&midnight);
+    (void)localtime_r(&midnight, &sday);
+
+    /* update the calendar */
+    cal = lookup_widget(calendar_window, "calendar1");
+    if (cal != NULL) {
+	gtk_calendar_select_month(GTK_CALENDAR(cal), sday.tm_mon,
+				  sday.tm_year+1900);
+	gtk_calendar_select_day(GTK_CALENDAR(cal), sday.tm_mday);
+	gtk_calendar_mark_day(GTK_CALENDAR(cal), sday.tm_mday);
+    }
 
     TAILQ_FOREACH(task, &tasktable, next) {
 	/* first, scan the tasktable, and make sure every task has a todo */
@@ -521,37 +806,43 @@ gboolean scan_tasktable(gpointer data)
 	    if (calc_midnight(task->time) == midnight)
 		addtask++;
 	} else {
-	    if (task->dowe[0] || task->dow[sday->tm_wday]) {
+	    if (task->dowe[0] || task->dow[sday.tm_wday]) {
 		addtask++;
-	    } else if ((task->dowe[1] && sday->tm_wday == 1) ||
-		       (task->dowe[2] && sday->tm_wday == 1 &&
-			((sday->tm_yday/7)%2 == 0)) ||
-		       (task->dowe[3] && sday->tm_mday == 1) ||
-		       (task->dowe[4] && sday->tm_mday == 1 &&
-			sday->tm_mon%2 == 0)) {
+/*		printf("task=%s, gotit daily\n", task->name);
+		printf("dowe[0]=%d dow 0=%d 1=%d 2=%d 3=%d 4=%d 5=%d 6=%d"
+		       " day=%d\n", task->dowe[0], task->dow[0],
+		       task->dow[1], task->dow[2], task->dow[3],
+		       task->dow[4], task->dow[5], task->dow[6],
+		       sday.tm_wday);*/
+	    } else if ((task->dowe[1] && sday.tm_wday == 1) ||
+		       (task->dowe[2] && sday.tm_wday == 1 &&
+			((sday.tm_yday/7)%2 == 0)) ||
+		       (task->dowe[3] && sday.tm_mday == 1) ||
+		       (task->dowe[4] && sday.tm_mday == 1 &&
+			sday.tm_mon%2 == 0)) {
 		  addtask++;
-	    } else if (task->dowe[1] && sday->tm_wday > 1) {
+	    } else if (task->dowe[1] && sday.tm_wday > 1) {
 		/* weekly special check */
 		if (difftime(now, calc_midnight(todo->completed))
-		    > SECONDS_PER_DAY*(sday->tm_wday - 1))
+		    > SECONDS_PER_DAY*(sday.tm_wday - 1))
 		    addtask++;
 	    } else if (task->dowe[2]) {
 		adder = 0;
-		if ((sday->tm_yday/7)%2 != 0)
+		if ((sday.tm_yday/7)%2 != 0)
 		    adder = 7;
 		if (difftime(now, calc_midnight(todo->completed))
-		    > SECONDS_PER_DAY*(adder + sday->tm_wday -1))
+		    > SECONDS_PER_DAY*(adder + sday.tm_wday -1))
 		    addtask++;
 	    } else if (task->dowe[3]) {
 		if (difftime(now, calc_midnight(todo->completed))
-		    > SECONDS_PER_DAY*sday->tm_mday)
+		    > SECONDS_PER_DAY*sday.tm_mday)
 		    addtask++;
 	    } else if (task->dowe[4]) {
 		adder = 0;
-		if (sday->tm_mon%2 != 0)
+		if (sday.tm_mon%2 != 0)
 		    adder = 30;
 		if (difftime(now, calc_midnight(todo->completed))
-		    > SECONDS_PER_DAY*(sday->tm_mday+adder))
+		    > SECONDS_PER_DAY*(sday.tm_mday+adder))
 		    addtask++;
 	    }
 	}
@@ -571,10 +862,26 @@ gboolean scan_tasktable(gpointer data)
 			 calc_midnight(todo->completed)) > SECONDS_PER_DAY) {
 		todo->window = create_dialog_reminder(task->name, canproc);
 		todo->lastalert = now;
+/*		printf("task fired %s\n", task->name);*/
 		gtk_widget_show(todo->window);
 	    }
 	}
     }
+
+    /* now see if we owe anyone an email */
+    midnight = calc_midnight(now);
+    midnight -= options->wakeup;
+    etime = midnight + options->emailtime;
+    (void)localtime_r(&midnight, &sday);
+
+    if (options->emailfreq == EMAIL_DAILY ||
+	(options->emailfreq == EMAIL_WEEKLY && sday.tm_wday == 0) ||
+	(options->emailfreq == EMAIL_MONTHLY && sday.tm_mday == 1)) {
+	if (difftime(now, etime) > 0 &&
+	    difftime(now, etime) < options->checkfrequency)
+	    send_task_email();
+    }
+
     /* rescedule the timeout */
     timeout = g_timeout_add(options->checkfrequency*1000,
 			    scan_tasktable, NULL);

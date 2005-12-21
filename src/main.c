@@ -50,8 +50,9 @@ guint timeout;
 const char *firsttime = 
     "This appears to be the first time you have ever run <b>gchore</b>.\n"
     "I have gone ahead and created a <i>.gchorerc</i> file in your"
-    " home directory, as well as <i>gchore.task</i> and <i>gchore.todo</i>"
-    " files, which contain your task and todo databases respectively."
+    " home directory, as well as the <i>gchore.task</i>, <i>gchore.todo</i>"
+    " and <i>gchore.log</i>"
+    " files, which contain your task, todo and log databases respectively."
     "\n\nPlease take a look at the options under <i>File->Properties</i>"
     " and edit them to your liking before adding any tasks";
 const gchar *version = "0.5";
@@ -91,15 +92,24 @@ int main (int argc, char *argv[])
 	else
 	    sprintf(file, "%s/gchore.task", home);
 	options->taskdb = strdup(file);
+
 	if (home == NULL)
 	    sprintf(file, "./gchore.todo");
 	else
 	    sprintf(file, "%s/gchore.todo", home);
 	options->tododb = strdup(file);
+
+	if (home == NULL)
+	    sprintf(file, "./gchore.log");
+	else
+	    sprintf(file, "%s/gchore.log", home);
+	options->logdb = strdup(file);
+
 	write_optionsfile();
     } else {
 	parse_taskfile(options->taskdb);
 	parse_todofile(options->tododb);
+	parse_logfile(options->logdb);
 	tmpw = lookup_widget(calendar_window, "calendar1");
 	if (tmpw)
 	    on_calendar1_day_selected(GTK_CALENDAR(tmpw), NULL);

@@ -548,13 +548,15 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
 
 	gtk_entry_set_text(GTK_ENTRY(entry_taskname), task->name);
 	if (task->time != 0) {
-	    tme = localtime(&task->time);
+	    tme = malloc(sizeof(struct tm));
+	    (void)localtime_r(&task->time, tme);
 	    (void)strftime(buf, 256, "%m/%d/%Y", tme);
 	    gtk_entry_set_text(GTK_ENTRY(entry_taskdate), buf);
 	    (void)strftime(buf, 256, "%R", tme);
 	    gtk_entry_set_text(GTK_ENTRY(entry_tasktime), buf);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(repeat_false),
 					 TRUE);
+	    free(tme);
 	} else {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(repeat_true), TRUE);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_daily),
@@ -668,6 +670,7 @@ GtkWidget *create_dialog_options(void)
     GtkWidget *entry_taskdb;
     GtkWidget *label16;
     GtkWidget *entry_tododb;
+    GtkWidget *labellog, *entry_logdb, *button_findlogdb;
     GtkWidget *button_findtaskdb;
     GtkWidget *button_findtododb;
     GtkObject *spin_updatetime_adj;
@@ -757,6 +760,19 @@ GtkWidget *create_dialog_options(void)
     if (options->tododb)
 	gtk_entry_set_text(GTK_ENTRY(entry_tododb), options->tododb);
 
+    labellog = gtk_label_new("Log Database");
+    gtk_widget_show(labellog);
+    gtk_fixed_put(GTK_FIXED(fixed4), labellog, 8, 120);
+    gtk_widget_set_size_request(labellog, 88, 16);
+    gtk_label_set_line_wrap(GTK_LABEL(labellog), TRUE);
+
+    entry_logdb = gtk_entry_new();
+    gtk_widget_show(entry_logdb);
+    gtk_fixed_put(GTK_FIXED(fixed4), entry_logdb, 8, 136);
+    gtk_widget_set_size_request(entry_logdb, 158, 21);
+    if (options->logdb)
+	gtk_entry_set_text(GTK_ENTRY(entry_logdb), options->logdb);
+
     button_findtaskdb = gtk_button_new_from_stock("gtk-find");
     gtk_widget_show(button_findtaskdb);
     gtk_fixed_put(GTK_FIXED(fixed4), button_findtaskdb, 168, 56);
@@ -767,10 +783,15 @@ GtkWidget *create_dialog_options(void)
     gtk_fixed_put(GTK_FIXED(fixed4), button_findtododb, 168, 96);
     gtk_widget_set_size_request(button_findtododb, 53, 23);
 
+    button_findlogdb = gtk_button_new_from_stock("gtk-find");
+    gtk_widget_show(button_findlogdb);
+    gtk_fixed_put(GTK_FIXED(fixed4), button_findlogdb, 168, 136);
+    gtk_widget_set_size_request(button_findlogdb, 53, 23);
+
     spin_updatetime_adj = gtk_adjustment_new(5, 5, 360, 1, 10, 10);
     spin_updatetime = gtk_spin_button_new(GTK_ADJUSTMENT(spin_updatetime_adj), 1, 0);
     gtk_widget_show(spin_updatetime);
-    gtk_fixed_put(GTK_FIXED(fixed4), spin_updatetime, 192, 136);
+    gtk_fixed_put(GTK_FIXED(fixed4), spin_updatetime, 192, 176);
     gtk_widget_set_size_request(spin_updatetime, 52, 21);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_updatetime), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_updatetime),
@@ -778,32 +799,32 @@ GtkWidget *create_dialog_options(void)
 
     label17 = gtk_label_new("Frequency in minutes to check for tasks to be done");
     gtk_widget_show(label17);
-    gtk_fixed_put(GTK_FIXED(fixed4), label17, 8, 128);
+    gtk_fixed_put(GTK_FIXED(fixed4), label17, 8, 168);
     gtk_widget_set_size_request(label17, 176, 32);
     gtk_label_set_line_wrap(GTK_LABEL(label17), TRUE);
 
     label19 = gtk_label_new("Watch directory");
     gtk_widget_show(label19);
-    gtk_fixed_put(GTK_FIXED(fixed4), label19, 8, 168);
+    gtk_fixed_put(GTK_FIXED(fixed4), label19, 8, 208);
     gtk_widget_set_size_request(label19, 144, 16);
     gtk_label_set_line_wrap(GTK_LABEL(label19), TRUE);
 
     entry_watch_directory = gtk_entry_new();
     gtk_widget_show(entry_watch_directory);
-    gtk_fixed_put(GTK_FIXED(fixed4), entry_watch_directory, 8, 184);
+    gtk_fixed_put(GTK_FIXED(fixed4), entry_watch_directory, 8, 224);
     gtk_widget_set_size_request(entry_watch_directory, 232, 24);
     if (options->watchdir)
 	gtk_entry_set_text(GTK_ENTRY(entry_watch_directory),options->watchdir);
 
     labelwu = gtk_label_new("When do you usually wake up?");
     gtk_widget_show(labelwu);
-    gtk_fixed_put(GTK_FIXED(fixed4), labelwu, 8, 216);
+    gtk_fixed_put(GTK_FIXED(fixed4), labelwu, 8, 256);
     gtk_widget_set_size_request(labelwu, 232, 16);
     gtk_label_set_line_wrap(GTK_LABEL(labelwu), TRUE);
 
     entry_wakeup = gtk_entry_new();
     gtk_widget_show(entry_wakeup);
-    gtk_fixed_put(GTK_FIXED(fixed4), entry_wakeup, 8, 232);
+    gtk_fixed_put(GTK_FIXED(fixed4), entry_wakeup, 8, 272);
     gtk_widget_set_size_request(entry_wakeup, 64, 16);
     if (options->wakeup)
 	sprintf(buf, "%d:%0.2d", options->wakeup/3600,
@@ -976,8 +997,17 @@ GtkWidget *create_dialog_options(void)
     g_signal_connect((gpointer)button_findtododb, "button_press_event",
 		     G_CALLBACK(on_button_findtododb_button_press_event),
 		     (gpointer)dialog_options);
+    g_signal_connect((gpointer)button_findlogdb, "button_press_event",
+		     G_CALLBACK(on_button_findlogdb_button_press_event),
+		     (gpointer)dialog_options);
     g_signal_connect((gpointer)checkbutton1, "clicked",
 		     G_CALLBACK(on_check_sendemail_clicked),
+		     (gpointer)dialog_options);
+    g_signal_connect((gpointer)radio_email_complete, "clicked",
+		     G_CALLBACK(toggle_options_emailtime),
+		     (gpointer)dialog_options);
+    g_signal_connect((gpointer)radio_email_time, "clicked",
+		     G_CALLBACK(toggle_options_emailtime),
 		     (gpointer)dialog_options);
     g_signal_connect((gpointer)button_applyoptions, "button_press_event",
 		     G_CALLBACK(on_button_applyoptions_button_press_event),
@@ -1002,6 +1032,9 @@ GtkWidget *create_dialog_options(void)
     GLADE_HOOKUP_OBJECT(dialog_options, entry_tododb, "entry_tododb");
     GLADE_HOOKUP_OBJECT(dialog_options, button_findtaskdb, "button_findtaskdb");
     GLADE_HOOKUP_OBJECT(dialog_options, button_findtododb, "button_findtododb");
+    GLADE_HOOKUP_OBJECT(dialog_options, labellog, "labellog");
+    GLADE_HOOKUP_OBJECT(dialog_options, entry_logdb, "entry_logdb");
+    GLADE_HOOKUP_OBJECT(dialog_options, button_findlogdb, "button_findlogdb");
     GLADE_HOOKUP_OBJECT(dialog_options, spin_updatetime, "spin_updatetime");
     GLADE_HOOKUP_OBJECT(dialog_options, label17, "label17");
     GLADE_HOOKUP_OBJECT(dialog_options, label19, "label19");
