@@ -808,12 +808,6 @@ gboolean scan_tasktable(gpointer data)
 	} else {
 	    if (task->dowe[0] || task->dow[sday.tm_wday]) {
 		addtask++;
-/*		printf("task=%s, gotit daily\n", task->name);
-		printf("dowe[0]=%d dow 0=%d 1=%d 2=%d 3=%d 4=%d 5=%d 6=%d"
-		       " day=%d\n", task->dowe[0], task->dow[0],
-		       task->dow[1], task->dow[2], task->dow[3],
-		       task->dow[4], task->dow[5], task->dow[6],
-		       sday.tm_wday);*/
 	    } else if ((task->dowe[1] && sday.tm_wday == 1) ||
 		       (task->dowe[2] && sday.tm_wday == 1 &&
 			((sday.tm_yday/7)%2 == 0)) ||
@@ -862,7 +856,7 @@ gboolean scan_tasktable(gpointer data)
 			 calc_midnight(todo->completed)) > SECONDS_PER_DAY) {
 		todo->window = create_dialog_reminder(task->name, canproc);
 		todo->lastalert = now;
-/*		printf("task fired %s\n", task->name);*/
+		printf("task fired %s at %s", task->name, ctime(&now));
 		gtk_widget_show(todo->window);
 	    }
 	}
@@ -877,8 +871,8 @@ gboolean scan_tasktable(gpointer data)
     if (options->emailfreq == EMAIL_DAILY ||
 	(options->emailfreq == EMAIL_WEEKLY && sday.tm_wday == 0) ||
 	(options->emailfreq == EMAIL_MONTHLY && sday.tm_mday == 1)) {
-	if (difftime(now, etime) > 0 &&
-	    difftime(now, etime) < options->checkfrequency)
+	if (difftime(now, etime) >= 0 &&
+	    difftime(now, etime) <= options->checkfrequency)
 	    send_task_email();
     }
 

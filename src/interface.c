@@ -368,11 +368,16 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
     gtk_box_pack_start(GTK_BOX(vbox2), fixed5, TRUE, TRUE, 0);
 
     entry_taskname = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_taskname,
+			 "A description of the task.  This string will "
+			 "appear in the reminder popup.", NULL);
     gtk_widget_show(entry_taskname);
     gtk_fixed_put(GTK_FIXED(fixed5), entry_taskname, 56, 0);
     gtk_widget_set_size_request(entry_taskname, 272, 24);
 
     check_weekly = gtk_check_button_new_with_mnemonic("Weekly");
+    gtk_tooltips_set_tip(tooltips, check_weekly,
+			 "This task will occur once per week on Monday", NULL);
     gtk_widget_show(check_weekly);
     gtk_fixed_put(GTK_FIXED(fixed5), check_weekly, 8, 72);
     gtk_widget_set_size_request(check_weekly, 100, 21);
@@ -383,14 +388,20 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
 		tod->sday.tm_year + 1900);
 	gtk_entry_set_text((GtkEntry *) entry_taskdate, buf);
     }
+    gtk_tooltips_set_tip(tooltips, entry_taskdate,
+			 "The date the task occurs on in the format MM/DD/YY",
+			 NULL);
     gtk_widget_show(entry_taskdate);
     gtk_fixed_put(GTK_FIXED(fixed5), entry_taskdate, 232, 128);
     gtk_widget_set_size_request(entry_taskdate, 96, 24);
     gtk_widget_set_sensitive(entry_taskdate, FALSE);
-
     entry_tasktime = gtk_entry_new();
     sprintf(buf, "0:00");
     gtk_entry_set_text((GtkEntry *) entry_tasktime, buf);
+    gtk_tooltips_set_tip(tooltips, entry_tasktime,
+			 "The time the task occurs at in the format HH:MM",
+			 NULL);
+    
     gtk_widget_show(entry_tasktime);
     gtk_fixed_put(GTK_FIXED(fixed5), entry_tasktime, 232, 152);
     gtk_widget_set_size_request(entry_tasktime, 96, 24);
@@ -408,17 +419,25 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
 
     spinbutton1_adj = gtk_adjustment_new(1, 0, 100, 1, 10, 10);
     spinbutton1 = gtk_spin_button_new(GTK_ADJUSTMENT(spinbutton1_adj), 1, 0);
+    gtk_tooltips_set_tip(tooltips, spinbutton1,
+			 "How many days can this task be procrastinated?",
+			 NULL);
     gtk_widget_show(spinbutton1);
     gtk_fixed_put(GTK_FIXED(fixed5), spinbutton1, 288, 104);
     gtk_widget_set_size_request(spinbutton1, 52, 21);
 
     label23 = gtk_label_new("Procrastinatable Days");
+    gtk_tooltips_set_tip(tooltips, label23,
+			 "How many days can this task be procrastinated?",
+			 NULL);
     gtk_widget_show(label23);
     gtk_fixed_put(GTK_FIXED(fixed5), label23, 192, 96);
     gtk_widget_set_size_request(label23, 96, 32);
     gtk_label_set_line_wrap(GTK_LABEL(label23), TRUE);
 
     repeat_false = gtk_radio_button_new_with_mnemonic(NULL, "One time task");
+    gtk_tooltips_set_tip(tooltips, repeat_false,
+			 "Does this task occur once and only once?", NULL);
     gtk_widget_show(repeat_false);
     gtk_fixed_put(GTK_FIXED(fixed5), repeat_false, 192, 176);
     gtk_widget_set_size_request(repeat_false, 136, 24);
@@ -426,6 +445,8 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
     repeat_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(repeat_false));
 
     repeat_true = gtk_radio_button_new_with_mnemonic(NULL, "Repeated task");
+    gtk_tooltips_set_tip(tooltips, repeat_true,
+			 "Does this task repeat on a reoccuring basis?", NULL);
     gtk_widget_show(repeat_true);
     gtk_fixed_put(GTK_FIXED(fixed5), repeat_true, 192, 200);
     gtk_widget_set_size_request(repeat_true, 136, 24);
@@ -434,6 +455,8 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(repeat_true), TRUE);
 
     check_daily = gtk_check_button_new_with_mnemonic("Daily");
+    gtk_tooltips_set_tip(tooltips, check_daily,
+			 "Task occurs every day", NULL);
     gtk_widget_show(check_daily);
     gtk_fixed_put(GTK_FIXED(fixed5), check_daily, 8, 48);
     gtk_widget_set_size_request(check_daily, 100, 21);
@@ -472,51 +495,72 @@ GtkWidget *create_dialog_taskentry(caltime_t * tod, int taskid)
     gtk_editable_set_editable(GTK_EDITABLE(entry_taskid), FALSE);
 
     check_sunday = gtk_check_button_new_with_mnemonic("Sunday");
+    gtk_tooltips_set_tip(tooltips, check_sunday,
+			 "Task occurs every sunday", NULL);
     gtk_widget_show(check_sunday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_sunday, 8, 312);
     gtk_widget_set_size_request(check_sunday, 96, 24);
 
     check_saturday = gtk_check_button_new_with_mnemonic("Saturday");
+    gtk_tooltips_set_tip(tooltips, check_saturday,
+			 "Task occurs every saturday", NULL);
     gtk_widget_show(check_saturday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_saturday, 8, 288);
     gtk_widget_set_size_request(check_saturday, 88, 24);
 
     check_friday = gtk_check_button_new_with_mnemonic("Friday");
+    gtk_tooltips_set_tip(tooltips, check_friday,
+			 "Task occurs every friday", NULL);
     gtk_widget_show(check_friday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_friday, 8, 264);
     gtk_widget_set_size_request(check_friday, 80, 24);
 
     check_thursday = gtk_check_button_new_with_mnemonic("Thursday");
+    gtk_tooltips_set_tip(tooltips, check_thursday,
+			 "Task occurs every thursday", NULL);
     gtk_widget_show(check_thursday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_thursday, 8, 240);
     gtk_widget_set_size_request(check_thursday, 96, 24);
 
     check_wednesday = gtk_check_button_new_with_mnemonic("Wednesday");
+    gtk_tooltips_set_tip(tooltips, check_wednesday,
+			 "Task occurs every wednesday", NULL);
     gtk_widget_show(check_wednesday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_wednesday, 8, 216);
     gtk_widget_set_size_request(check_wednesday, 104, 24);
 
     check_tuesday = gtk_check_button_new_with_mnemonic("Tuesday");
+    gtk_tooltips_set_tip(tooltips, check_tuesday,
+			 "Task occurs every tuesday", NULL);
     gtk_widget_show(check_tuesday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_tuesday, 8, 192);
     gtk_widget_set_size_request(check_tuesday, 80, 24);
 
     check_monday = gtk_check_button_new_with_mnemonic("Monday");
+    gtk_tooltips_set_tip(tooltips, check_monday,
+			 "Task occurs every monday", NULL);
     gtk_widget_show(check_monday);
     gtk_fixed_put(GTK_FIXED(fixed5), check_monday, 8, 168);
     gtk_widget_set_size_request(check_monday, 88, 24);
 
     check_bi_weekly = gtk_check_button_new_with_mnemonic("Bi-Weekly");
+    gtk_tooltips_set_tip(tooltips, check_bi_weekly,
+			 "Task occurs every other monday", NULL);
     gtk_widget_show(check_bi_weekly);
     gtk_fixed_put(GTK_FIXED(fixed5), check_bi_weekly, 8, 96);
     gtk_widget_set_size_request(check_bi_weekly, 100, 21);
 
     check_monthly = gtk_check_button_new_with_mnemonic("Monthly");
+    gtk_tooltips_set_tip(tooltips, check_monthly,
+			 "Task occurs on the first day of every month", NULL);
     gtk_widget_show(check_monthly);
     gtk_fixed_put(GTK_FIXED(fixed5), check_monthly, 8, 120);
     gtk_widget_set_size_request(check_monthly, 100, 21);
 
     check_bi_monthly = gtk_check_button_new_with_mnemonic("Bi-Monthly");
+    gtk_tooltips_set_tip(tooltips, check_bi_monthly,
+			 "Task occurs on the first day of "
+			 "every other month", NULL);
     gtk_widget_show(check_bi_monthly);
     gtk_fixed_put(GTK_FIXED(fixed5), check_bi_monthly, 8, 144);
     gtk_widget_set_size_request(check_bi_monthly, 100, 21);
@@ -702,11 +746,14 @@ GtkWidget *create_dialog_options(void)
     GtkWidget *button_okoptions;
     GtkWidget *labelwu;
     GtkWidget *entry_wakeup;
+    GtkTooltips *tooltips;
     char buf[256];
 
     dialog_options = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog_options), "Options");
     gtk_window_set_type_hint(GTK_WINDOW(dialog_options), GDK_WINDOW_TYPE_HINT_DIALOG);
+
+    tooltips = gtk_tooltips_new();
 
     dialog_vbox2 = GTK_DIALOG(dialog_options)->vbox;
     gtk_widget_show(dialog_vbox2);
@@ -721,9 +768,12 @@ GtkWidget *create_dialog_options(void)
 
     spin_procrastinate_adj = gtk_adjustment_new(0, 0, 99, 1, 10, 10);
     spin_procrastinate = gtk_spin_button_new(GTK_ADJUSTMENT(spin_procrastinate_adj), 1, 0);
+    gtk_tooltips_set_tip(tooltips, spin_procrastinate,
+			 "Maximum number of days this task can be "
+			 "procrastinated", NULL);
     gtk_widget_show(spin_procrastinate);
-    gtk_fixed_put(GTK_FIXED(fixed4), spin_procrastinate, 272, 8);
-    gtk_widget_set_size_request(spin_procrastinate, 0, 0);
+    gtk_fixed_put(GTK_FIXED(fixed4), spin_procrastinate, 240, 8);
+    gtk_widget_set_size_request(spin_procrastinate, 40, 24);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_procrastinate), TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_procrastinate),
 			      options->maxproc);
@@ -731,7 +781,7 @@ GtkWidget *create_dialog_options(void)
     label6 = gtk_label_new("Maximum days task can be procrastinated");
     gtk_widget_show(label6);
     gtk_fixed_put(GTK_FIXED(fixed4), label6, 8, 8);
-    gtk_widget_set_size_request(label6, 264, 24);
+    gtk_widget_set_size_request(label6, 200, 24);
     gtk_label_set_line_wrap(GTK_LABEL(label6), TRUE);
 
     label15 = gtk_label_new("Task Database");
@@ -741,6 +791,8 @@ GtkWidget *create_dialog_options(void)
     gtk_label_set_line_wrap(GTK_LABEL(label15), TRUE);
 
     entry_taskdb = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_taskdb,
+			 "Full pathname to task database", NULL);
     gtk_widget_show(entry_taskdb);
     gtk_fixed_put(GTK_FIXED(fixed4), entry_taskdb, 8, 56);
     gtk_widget_set_size_request(entry_taskdb, 158, 21);
@@ -754,6 +806,8 @@ GtkWidget *create_dialog_options(void)
     gtk_label_set_line_wrap(GTK_LABEL(label16), TRUE);
 
     entry_tododb = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_tododb,
+			 "Full pathname to todo database", NULL);
     gtk_widget_show(entry_tododb);
     gtk_fixed_put(GTK_FIXED(fixed4), entry_tododb, 8, 96);
     gtk_widget_set_size_request(entry_tododb, 158, 21);
@@ -767,6 +821,8 @@ GtkWidget *create_dialog_options(void)
     gtk_label_set_line_wrap(GTK_LABEL(labellog), TRUE);
 
     entry_logdb = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_logdb,
+			 "Full pathname to log database", NULL);
     gtk_widget_show(entry_logdb);
     gtk_fixed_put(GTK_FIXED(fixed4), entry_logdb, 8, 136);
     gtk_widget_set_size_request(entry_logdb, 158, 21);
@@ -810,6 +866,10 @@ GtkWidget *create_dialog_options(void)
     gtk_label_set_line_wrap(GTK_LABEL(label19), TRUE);
 
     entry_watch_directory = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_watch_directory,
+			 "Directory name to watch for gchore tasks to be "
+			 "created in.  This is for use with the web interface",
+			 NULL);
     gtk_widget_show(entry_watch_directory);
     gtk_fixed_put(GTK_FIXED(fixed4), entry_watch_directory, 8, 224);
     gtk_widget_set_size_request(entry_watch_directory, 232, 24);
@@ -823,6 +883,10 @@ GtkWidget *create_dialog_options(void)
     gtk_label_set_line_wrap(GTK_LABEL(labelwu), TRUE);
 
     entry_wakeup = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_wakeup,
+			 "This decides what time gchore will begin to show "
+			 "the day's tasks to you.  Useful if you tend to do "
+			 "your chores at midnight.", NULL);
     gtk_widget_show(entry_wakeup);
     gtk_fixed_put(GTK_FIXED(fixed4), entry_wakeup, 8, 272);
     gtk_widget_set_size_request(entry_wakeup, 64, 16);
@@ -847,6 +911,9 @@ GtkWidget *create_dialog_options(void)
     gtk_widget_set_size_request(label7, 160, 16);
 
     entry_emailaddr = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_emailaddr,
+			 "When gchore sends out an email, it will be sent "
+			 "to this address.", NULL);
     gtk_widget_show(entry_emailaddr);
     gtk_fixed_put(GTK_FIXED(fixed3), entry_emailaddr, 8, 40);
     gtk_widget_set_size_request(entry_emailaddr, 216, 24);
@@ -855,6 +922,9 @@ GtkWidget *create_dialog_options(void)
 	gtk_entry_set_text(GTK_ENTRY(entry_emailaddr), options->emailaddr);
 
     radio_email_complete = gtk_radio_button_new_with_mnemonic(NULL, "Send email at task completion?");
+    gtk_tooltips_set_tip(tooltips, radio_email_complete,
+			 "Send an email immediately following completion "
+			 "of a task. One email is send per task.", NULL);
     gtk_widget_show(radio_email_complete);
     gtk_fixed_put(GTK_FIXED(fixed3), radio_email_complete, 8, 72);
     gtk_widget_set_size_request(radio_email_complete, 208, 16);
@@ -870,6 +940,10 @@ GtkWidget *create_dialog_options(void)
 
     radio_email_time = gtk_radio_button_new_with_mnemonic(NULL, "Send email at specific time?");
     gtk_widget_show(radio_email_time);
+    gtk_tooltips_set_tip(tooltips, radio_email_time,
+			 "Send a scheduled email at a specific time, detailing"
+			 " which tasks have been accomplished up to that "
+			 "point.", NULL);
     gtk_fixed_put(GTK_FIXED(fixed3), radio_email_time, 8, 88);
     gtk_widget_set_size_request(radio_email_time, 184, 16);
     gtk_widget_set_sensitive(radio_email_time, FALSE);
@@ -902,6 +976,9 @@ GtkWidget *create_dialog_options(void)
     gtk_entry_set_text(GTK_ENTRY(entry_emailtime), buf);
 
     radio_freq_daily = gtk_radio_button_new_with_mnemonic(NULL, "Daily");
+    gtk_tooltips_set_tip(tooltips, radio_freq_daily,
+			 "Send the email every day at the specified time.",
+			 NULL);
     gtk_widget_show(radio_freq_daily);
     gtk_fixed_put(GTK_FIXED(fixed3), radio_freq_daily, 8, 120);
     gtk_widget_set_size_request(radio_freq_daily, 94, 21);
@@ -913,6 +990,9 @@ GtkWidget *create_dialog_options(void)
 				     TRUE);
 
     radio_freq_weekly = gtk_radio_button_new_with_mnemonic(NULL, "Weekly");
+    gtk_tooltips_set_tip(tooltips, radio_freq_weekly,
+			 "Send the email every sunday at the specified time.",
+			 NULL);
     gtk_widget_show(radio_freq_weekly);
     gtk_fixed_put(GTK_FIXED(fixed3), radio_freq_weekly, 8, 136);
     gtk_widget_set_size_request(radio_freq_weekly, 94, 21);
@@ -924,6 +1004,9 @@ GtkWidget *create_dialog_options(void)
 				     TRUE);
 
     radio_freq_monthly = gtk_radio_button_new_with_mnemonic(NULL, "Monthly");
+    gtk_tooltips_set_tip(tooltips, radio_freq_monthly,
+			 "Send the email on the first of every month at "
+			 "the specified time.", NULL);
     gtk_widget_show(radio_freq_monthly);
     gtk_fixed_put(GTK_FIXED(fixed3), radio_freq_monthly, 8, 152);
     gtk_widget_set_size_request(radio_freq_monthly, 94, 21);
@@ -942,6 +1025,9 @@ GtkWidget *create_dialog_options(void)
 
 
     check_reportproc = gtk_check_button_new_with_mnemonic("Report procrastination in email?");
+    gtk_tooltips_set_tip(tooltips, check_reportproc,
+			 "Include number of days each task was procrastinated "
+			 "in the completion emails?", NULL);
     gtk_widget_show(check_reportproc);
     gtk_fixed_put(GTK_FIXED(fixed3), check_reportproc, 8, 176);
     gtk_widget_set_size_request(check_reportproc, 208, 16);
@@ -950,6 +1036,9 @@ GtkWidget *create_dialog_options(void)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_reportproc),TRUE);
 
     entry_mailer_agent = gtk_entry_new();
+    gtk_tooltips_set_tip(tooltips, entry_mailer_agent,
+			 "Full pathname to sendmail, or other mailer with "
+			 "similar calling arguments.", NULL);
     gtk_widget_show(entry_mailer_agent);
     gtk_fixed_put(GTK_FIXED(fixed3), entry_mailer_agent, 8, 208);
     gtk_widget_set_size_request(entry_mailer_agent, 232, 24);
@@ -987,6 +1076,10 @@ GtkWidget *create_dialog_options(void)
     GTK_WIDGET_SET_FLAGS(button_okoptions, GTK_CAN_DEFAULT);
 
     checkbutton1 = gtk_check_button_new_with_mnemonic("Send email updates?");
+    gtk_tooltips_set_tip(tooltips, checkbutton1,
+			 "Gchore can send an email to someone letting them "
+			 "which tasks you have completed, and when they "
+			 "were completed.", NULL);
     gtk_widget_show(checkbutton1);
     gtk_fixed_put(GTK_FIXED(fixed3), checkbutton1, 0, 0);
     gtk_widget_set_size_request(checkbutton1, 144, 21);
