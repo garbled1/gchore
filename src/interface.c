@@ -1078,7 +1078,7 @@ GtkWidget *create_dialog_options(void)
     checkbutton1 = gtk_check_button_new_with_mnemonic("Send email updates?");
     gtk_tooltips_set_tip(tooltips, checkbutton1,
 			 "Gchore can send an email to someone letting them "
-			 "which tasks you have completed, and when they "
+			 "know which tasks you have completed, and when they "
 			 "were completed.", NULL);
     gtk_widget_show(checkbutton1);
     gtk_fixed_put(GTK_FIXED(fixed3), checkbutton1, 0, 0);
