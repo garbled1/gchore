@@ -856,7 +856,6 @@ gboolean scan_tasktable(gpointer data)
 			 calc_midnight(todo->completed)) > SECONDS_PER_DAY) {
 		todo->window = create_dialog_reminder(task->name, canproc);
 		todo->lastalert = now;
-		printf("task fired %s at %s", task->name, ctime(&now));
 		gtk_widget_show(todo->window);
 	    }
 	}
