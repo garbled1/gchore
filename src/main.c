@@ -55,7 +55,7 @@ const char *firsttime =
     " files, which contain your task, todo and log databases respectively."
     "\n\nPlease take a look at the options under <i>File->Properties</i>"
     " and edit them to your liking before adding any tasks";
-const gchar *version = "0.5";
+const gchar *version = "1.0";
 
 extern options_t *options;
 
