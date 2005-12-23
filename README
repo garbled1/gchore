@@ -1,0 +1,35 @@
+  This is version 1.0 of Gchore.
+
+Gchore is a simple tool that tracks your chores and reminds you to do
+them on a daily basis. It is not a general todo list, but is better
+suited for repeating tasks, such as taking out the garbage on
+Mondays.
+
+Another excellent use for gchore is for scheduled fish tank
+maintenance.  You can set up gchore to remind you to do routine water
+changes, vaccum the gravel, feed the fish, whatever, and it will
+remind you via it's popups.
+
+Gchore consists of a calendar, which displays the current month.
+Double clicking on a day will allow you to add a task to that day.
+you may also use the add/edit/delete task functions from the "Tasks"
+menu above the calendar.  Preferences/options may be edited by
+selecting File->Preferences.
+
+Gchore is highly configurable, and many of it's features can be
+accessed through the preferences popup.  One such preference is the
+email option.  You can configure gchore to automatically email someone
+when a task is completed, or send out an email at a scheduled time,
+detailing what has been accomplished since the last email was sent.
+
+The easiest way to start using gchore is to simply run it, and start
+adding tasks.  It will automatically create all it's databases in your
+home directory.  There is no need to move these, but you can if you
+would like to.  Once you have added a task, gchore will start issuing
+reminders to you via popup windows.  Once you complete the task, click
+"completed", or if you don't feel like doing it today, click
+"procrastinate".
+
+Gchore was written by Tim Rightnour, and is released under the GPL.
+For more information see the homepage:
+http://gchore.sourceforge.net/
