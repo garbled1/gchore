@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 #if defined(__linux__)
 #include "queue.h"
 #else

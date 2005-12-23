@@ -29,6 +29,10 @@
 
 #include <stdio.h>
 #include <time.h>
+#if defined(__linux__)
+#define __USE_GNU
+#endif
+#include <errno.h>
 
 #include <gtk/gtk.h>
 #include <libxml/xmlmemory.h>
